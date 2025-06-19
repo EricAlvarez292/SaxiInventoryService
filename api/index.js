@@ -42,14 +42,10 @@ app.use('/api/v1/purchases', purchases.router);
 app.use('/api/v1/sales', sales.router);
 
 // DB connection test
-app.get('/test', async (req, res) => {
-    try {
-        const result = await database.query('SELECT * FROM products');
-        res.json(result);
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
+app.get('/api/hello', async (req, res) => {
+    res.json({ message: 'Hello from your Express API! 🎉' });
 });
 
-// Listen on enviroment port or 5000
-app.listen(port, () => console.log(`Listening on port ${port}`))
+// Listen on enviroment port or 5000 for local dev
+/* app.listen(port, () => console.log(`Listening on port ${port}`)) */
+module.exports = app;
