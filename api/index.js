@@ -6,16 +6,16 @@ const app = express()
 const port = process.env.PORT || 5000;
 
 /* DB*/
-const database = require('./db/mysqlDb')
+const database = require('../db/mysqlDb')
 
 /* components */
-const user = require('./component/user');
-const supplier = require('./component/supplier');
-const product = require('./component/product');
-const inventory = require('./component/inventory');
-const transaction = require('./component/transaction');
-const purchases = require('./component/purchase');
-const sales = require('./component/sales');
+const user = require('../component/user');
+const supplier = require('../component/supplier');
+const product = require('../component/product');
+const inventory = require('../component/inventory');
+const transaction = require('../component/transaction');
+const purchases = require('../component/purchase');
+const sales = require('../component/sales');
 
 // Parsing middleware
 // Parse application/x-www-form-urlencoded
