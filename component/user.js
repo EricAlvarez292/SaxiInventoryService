@@ -4,12 +4,13 @@ const router = express.Router();
 const db = require('../db/mysqlDb')
 
 router.get("/", async (req, res) => {
-    try {
+/*     try {
         const result = await db.query('SELECT * FROM users');
         res.json(result);
     } catch (err) {
         res.status(500).send(err.message);
-    }
+    } */
+    res.json({ message: 'Users Express API! 🎉' });
 })
 
 router.post("/", async (req, res) => {
