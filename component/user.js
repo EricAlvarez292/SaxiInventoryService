@@ -1,44 +1,48 @@
 const express = require('express');
-const router = express.Router();
-
-const db = require('../db/mysqlDb')
-
-router.get("/", async (req, res) => {
-/*     try {
-        const result = await db.query('SELECT * FROM users');
-        res.json(result);
-    } catch (err) {
-        res.status(500).send(err.message);
-    } */
-    res.json({ message: 'Users Express API! 🎉' });
-})
-
-router.post("/", async (req, res) => {
-    try {
-        const users = req.body;
-        const values = users.map(supplier => [
-            supplier.name,
-            supplier.role,
-            supplier.contact_info
-        ]);
-        const result = await new User().addUsers(values)
-        res.status(201).json({ message: "Users added successfully!", insertedRows: result.affectedRows });
-    } catch (err) {
-        console.error("Error inserting users:", err);
-        res.status(500).json({ error: err.message });
-    }
-});
+const pgdb = require('../db/pgdb');
+const models = require('../models/models')
 
 class User {
-    async getUsers() {
-        return await db.query('SELECT * FROM users');
+    constructor() {
+        this.pgdb = new pgdb();
+        this.router = express.Router();
+        this.initializeRoutes();
     }
 
-    async addUsers(usersInfo) {
-        const sql = "INSERT INTO users (name, role, contact_info ) VALUES ?";
-        return await db.query(sql, [usersInfo]);
+    initializeRoutes() {
+        this.router.get("/", this.getUsers.bind(this));
+        this.router.post("/", this.addUsers.bind(this));
+    }
+
+    async getUsers(req, res) {
+        try {
+            const result = await this.pgdb.getDbInstance().any(`SELECT * FROM users`);
+            console.log(`getUsers() : ${JSON.stringify(result)}`)
+            res.json(result);
+        } catch (err) {
+            res.status(500).send(err.message);
+        }
+    }
+
+    async addUsers(req, res) {
+        try {
+            const usersInfo = req.body;
+            console.log(`addUsers() Request Data : ${JSON.stringify(usersInfo)}`)
+            const columns = this.pgdb.getColumns(models.user);
+            const sanitizedData = usersInfo.map((data) => this.pgdb.sanitizeData(data, models.user))
+            const insertQuery = this.pgdb.getDbHelpers().helpers.insert(sanitizedData, columns, 'users');
+            await this.pgdb.getDbInstance().any(insertQuery);
+            console.log(`addUsers() Response Data : ${JSON.stringify(sanitizedData)}`)
+            res.status(201).send(sanitizedData);
+        } catch (err) {
+            console.error("Error addUsers:", err);
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    getRouter() {
+        return this.router;
     }
 }
 
-
-module.exports = { router, User };
+module.exports = User;

@@ -1,21 +1,18 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const mysql = require('mysql')
 
 const app = express()
 const port = process.env.PORT || 5000;
 
 /* DB*/
-const database = require('../db/mysqlDb')
+const PgDB = require('../db/pgdb')
 
 /* components */
-const user = require('../component/user');
-const supplier = require('../component/supplier');
-const product = require('../component/product');
-const inventory = require('../component/inventory');
-const transaction = require('../component/transaction');
-const purchases = require('../component/purchase');
-const sales = require('../component/sales');
+const User = require('../component/user');
+const Supplier = require('../component/supplier');
+const Product = require('../component/product');
+const Inventory = require('../component/inventory');
+const Transaction = require('../component/transaction');
 
 // Parsing middleware
 // Parse application/x-www-form-urlencoded
@@ -33,19 +30,18 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 /*Routes*/
-app.use('/api/v1/users', user.router);
-app.use('/api/v1/suppliers', supplier.router);
-app.use('/api/v1/products', product.router);
-app.use('/api/v1/inventory', inventory.router);
-app.use('/api/v1/transactions', transaction.router);
-app.use('/api/v1/purchases', purchases.router);
-app.use('/api/v1/sales', sales.router);
+app.use('/api/v1/users', new User().getRouter());
+app.use('/api/v1/suppliers', new Supplier().getRouter());
+app.use('/api/v1/products', new Product().getRouter());
+app.use('/api/v1/inventory', new Inventory().getRouter());
+app.use('/api/v1/transactions', new Transaction().getRouter());
 
 // DB connection test
 app.get('/api/hello', async (req, res) => {
     res.json({ message: 'Hello from your Express API! 🎉' });
 });
+(function initDB() { new PgDB().testConnection() }());
 
 // Listen on enviroment port or 5000 for local dev
-/* app.listen(port, () => console.log(`Listening on port ${port}`)) */
+app.listen(port, () => console.log(`Listening on port ${port}`))
 module.exports = app;

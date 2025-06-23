@@ -1,77 +1,66 @@
 const express = require('express');
-const router = express.Router();
-
-const db = require('../db/mysqlDb')
-
-router.get("/", async (req, res) => {
-    try {
-        const result = await new Product().getProduct("products", null)
-        res.json(result);
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
-})
-
-
-router.get("/external/:supplier_id", async (req, res) => {
-    try {
-        const supplierId = req.params.supplier_id;
-        const result = await new Product().getProduct("external_products", null, supplierId)
-        res.json(result);
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
-})
-
-
-router.post("/external", async (req, res) => {
-    try {
-        const products = req.body;
-        const values = products.map(supplier => [
-            supplier.supplier_id,
-            supplier.name,
-            supplier.description,
-            supplier.category,
-            supplier.price
-        ]);
-        const result = await new Product().addProducts("external_products", values)
-        res.status(201).json({ message: "External Products added successfully!", insertedRows: result.affectedRows });
-    } catch (err) {
-        console.error("Error inserting products:", err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
+const pgdb = require('../db/pgdb');
+const models = require('../models/models')
 
 class Product {
 
-    async addProduct(purchaseInfo) {
-        return await db.query("INSERT INTO products SET ?", purchaseInfo);
+    constructor() {
+        this.pgdb = new pgdb();
+        this.router = express.Router();
+        this.initializeRoutes();
     }
 
-    async addProducts(dbName = "products", purchasesInfo) {
-        return await db.query(`INSERT INTO ${dbName} (supplier_id, name, description, category, price) VALUES ?`, [purchasesInfo]);
+    initializeRoutes() {
+        this.router.get("/", this.getProducts.bind(this));
+        this.router.post("/", this.addProducts.bind(this));
     }
 
-    async getProduct(dbName = "products", product_id = null, supplier_id = null) {
-        let conditions = [];
-        if (product_id !== null) {
-            conditions.push(`p.product_id = ${product_id}`);
+    async getProducts(req, res) {
+        try {
+            const { product_id, supplier_id } = req.query;
+            console.log(`getProducts() : ${JSON.stringify(req.query)}`)
+            const conditions = [];
+            const values = [];
+            if (product_id) {
+                conditions.push(`product_id = ${product_id}`);
+                values.push(product_id);
+            }
+            if (supplier_id) {
+                conditions.push(`supplier_id = ${supplier_id}`);
+                values.push(supplier_id);
+            }
+            const whereClause = conditions.length ? "WHERE " + conditions.join(" AND ") : "";
+            console.log(`getProducts() where clause : ${whereClause}`)
+            const result = await this.pgdb.getDbInstance().any(`SELECT * FROM products ${whereClause}`);
+            console.log(`getProducts() : ${JSON.stringify(result)}`)
+            res.json(result);
+        } catch (err) {
+            console.error("Error getProducts():", err);
+            res.status(500).send(err.message);
         }
-        if (supplier_id !== null) {
-            conditions.push(`p.supplier_id = ${supplier_id}`);
+    }
+
+    async addProducts(req, res) {
+        try {
+            const productsInfo = req.body;
+            console.log(`addProducts() Request Data : ${JSON.stringify(productsInfo)}`)
+            const columns = this.pgdb.getColumns(models.product);
+            const sanitizedData = productsInfo.map((data) => this.pgdb.sanitizeData(data, models.product))
+            const insertQuery = this.pgdb.getDbHelpers().helpers.insert(sanitizedData, columns, 'products');
+            await this.pgdb.getDbInstance().any(insertQuery);
+            console.log(`addProducts() Response Data : ${JSON.stringify(sanitizedData)}`)
+            res.status(201).send(sanitizedData);
+        } catch (err) {
+            console.error("Error addProducts():", err);
+            res.status(500).json({ error: err.message });
         }
-        let whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-        return await db.query(`SELECT p.*, iv.quantity_available
-                        FROM ${dbName} p
-                        LEFT JOIN (
-                            SELECT product_id, quantity_available
-                            FROM inventory
-                            WHERE last_updated = (SELECT MAX(last_updated) FROM inventory i WHERE i.product_id = inventory.product_id)
-                        ) iv ON iv.product_id = p.product_id
-                        ${whereClause};`)
+    }
+
+
+    getRouter() {
+        return this.router;
     }
 }
 
 
-module.exports = { router, Product };
+module.exports = Product;

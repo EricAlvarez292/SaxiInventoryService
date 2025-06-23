@@ -1,111 +1,102 @@
 const express = require('express');
-const router = express.Router();
-
-const db = require('../db/mysqlDb')
-
-const { Purchase } = require('../component/purchase')
-const { Product } = require('../component/product')
-const { Inventory } = require('../component/inventory');
-const { Sales } = require('../component/sales');
-const { Supplier } = require('../component/supplier');
-
-router.get("/", async (req, res) => {
-    try {
-        const result = await new Transaction().getTransactions()
-        res.json(result);
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
-})
-
-
-router.post("/", async (req, res) => {
-    try {
-        const transactionsSqlResult = await new Transaction().addTransaction(req.body)
-        res.status(201).json({ message: "Transactions added successfully!", transaction_id: transactionsSqlResult.insertId });
-    } catch (err) {
-        console.error("Error inserting transactions:", err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
+const pgdb = require('../db/pgdb');
+const models = require('../models/models')
 
 class Transaction {
 
-    async getTransactions() {
-        return await db.query('SELECT * FROM transactions');
+    constructor() {
+        this.pgdb = new pgdb();
+        this.router = express.Router();
+        this.initializeRoutes();
     }
 
-    async addTransaction(transactionBody) {
-        const existingProduct = await new Product().getProduct("products", transactionBody.product.product_id)
-        if (existingProduct.length == 0 && transactionBody.transaction_type == "purchase") {
-            const existingSupplier = await new Supplier().getSuppliers("suppliers", transactionBody.product.supplier_id)
-            if (existingSupplier.length == 0) {
-                const eternalSupplier = await new Supplier().getSuppliers("external_suppliers", transactionBody.product.supplier_id)
-                const values = eternalSupplier.map(supplier => [
-                    supplier.supplier_id,
-                    supplier.name,
-                    supplier.contact_info,
-                    supplier.address
-                ]);
-                console.log(`Inserting new supplier: ${values}`)
-                await new Supplier().addSuppliers("suppliers", "(supplier_id, name, contact_info, address)", values)
-            }
-            console.log(`Inserting new product: ${transactionBody.product}`)
-            await new Product().addProduct(transactionBody.product)
-        }
-        const transactionDetails = transactionBody.transaction_details
-        const transactionInfo = {
-            product_id: transactionBody.product.product_id,
-            transaction_type: transactionBody.transaction_type,
-            quantity_changed: transactionDetails.quantity,
-            user_id: transactionBody.user_id
-        }
-        const transactionsSql = "INSERT INTO transactions SET ?";
-        const transactionsSqlResult = await db.query(transactionsSql, transactionInfo);
+    initializeRoutes() {
+        this.router.get("/", this.getTransactions.bind(this));
+        this.router.post("/", this.addTransaction.bind(this));
+    }
 
-        let previousQuantity = 0
-        let latestQuantity = 0
-        const latestInventory = await new Inventory().getInventory(transactionBody.product.product_id)
-        if (latestInventory.length != 0) {
-            previousQuantity = latestInventory[0].quantity_available
+    async getTransactions(req, res) {
+        try {
+            const result = await this.pgdb.getDbInstance().any(`SELECT * FROM transactions`);
+            console.log(`getTransactions() : ${JSON.stringify(result)}`)
+            res.json(result);
+        } catch (err) {
+            res.status(500).send(err.message);
         }
+    }
 
-        if (transactionBody.transaction_type == "purchase") {
-            latestQuantity = (previousQuantity + transactionDetails.quantity)
-            const purchaseInfo = {
-                transaction_id: transactionsSqlResult.insertId,
-                supplier_id: transactionBody.product.supplier_id,
-                payment_method: transactionDetails.payment_method,
-                quantity: transactionDetails.quantity,
-                price_per_unit: transactionBody.product.price,
-                total_amount: transactionDetails.total_amount,
-                expected_delivery_date: transactionDetails.expected_delivery_date
+    async addTransaction(req, res) {
+        try {
+            console.log(`addTransaction() : ${JSON.stringify(req.body)}`)
+            const transactionInfo = req.body;
+            const transactionItemsInfo = transactionInfo.items;
+
+            const transactionColumns = this.pgdb.getColumns(models.transaction);
+            const transactionSanitizedData = this.pgdb.sanitizeData(transactionInfo, models.transaction)
+            const transactionInsertQuery = this.pgdb.getDbHelpers().helpers.insert(transactionSanitizedData, transactionColumns, 'transactions') + 'RETURNING transaction_id';
+            const transactionInsertResult = await this.pgdb.getDbInstance().one(transactionInsertQuery);
+            console.log(`addTransaction() Transaction: ${transactionInsertQuery}`)
+
+            const transactionItemColumns = this.pgdb.getColumns(models.transaction_item);
+            const transactionItemSanitizedData = transactionItemsInfo.map((data) => {
+                const sanitized = this.pgdb.sanitizeData(data, models.transaction_item);
+                sanitized.transaction_id = transactionInsertResult.transaction_id;
+                return sanitized;
+            })
+            const transactionItemInsertQuery = this.pgdb.getDbHelpers().helpers.insert(transactionItemSanitizedData, transactionItemColumns, 'transaction_items');
+            await this.pgdb.getDbInstance().any(transactionItemInsertQuery);
+            console.log(`addTransaction() Transaction Items: ${transactionItemInsertQuery}`)
+
+            const updateInventory = []
+            const insertInventory = []
+            for (const item of transactionItemSanitizedData) {
+                let previousQuantity = 0
+                let latestQuantity = 0
+                const result = await this.pgdb.getDbInstance().any(`SELECT * FROM inventory WHERE product_id = ${item.product_id}`);
+                const inventorySanitizedData = this.pgdb.sanitizeData(item, models.inventory)
+                if (result.length != 0) {
+                    const inventory = result[0]
+                    previousQuantity = inventory.quantity_in_stock;
+                }
+                if (transactionInfo.transaction_type == 'PURCHASE') {
+                    latestQuantity = previousQuantity + item.quantity;
+                } else {
+                    latestQuantity = previousQuantity - item.quantity;
+                }
+                inventorySanitizedData.quantity_in_stock = latestQuantity
+                item.quantity = latestQuantity
+                if (result.length != 0) {
+                    updateInventory.push(inventorySanitizedData)
+                } else {
+                    insertInventory.push(inventorySanitizedData)
+                }
             }
-            await new Purchase().addPurchase(purchaseInfo)
-        } else {
-            latestQuantity = (previousQuantity - transactionDetails.quantity)
-            const salesInfo = {
-                transaction_id: transactionsSqlResult.insertId,
-                payment_method: transactionDetails.payment_method,
-                quantity: transactionDetails.quantity,
-                price_per_unit: transactionBody.product.price,
-                total_amount: transactionDetails.total_amount,
-                customer_id: transactionDetails.customer_id,
-                customer_name: transactionDetails.customer_name,
+            if (updateInventory.length != 0) {
+                const inventoryColumnsUpdate = this.pgdb.getColumnsUpdate(models.inventory, 'product_id');
+                const inventoryUpdateQuery = this.pgdb.getDbHelpers().helpers.update(updateInventory, inventoryColumnsUpdate, 'inventory') + ' WHERE v.product_id = t.product_id';
+                await this.pgdb.getDbInstance().any(inventoryUpdateQuery);
+                console.log(`addTransaction() Update Inventory(): ${JSON.stringify(inventoryUpdateQuery)}`)
             }
-            await new Sales().addSales(salesInfo)
+            if (insertInventory.length != 0) {
+                const inventoryColumns = this.pgdb.getColumns(models.inventory);
+                const inventorySanitizedData = insertInventory.map((data) => this.pgdb.sanitizeData(data, models.inventory))
+                const inventoryInsertQuery = this.pgdb.getDbHelpers().helpers.insert(inventorySanitizedData, inventoryColumns, 'inventory');
+                await this.pgdb.getDbInstance().any(inventoryInsertQuery);
+                console.log(`addTransaction() Insert Inventory(): ${JSON.stringify(inventoryInsertQuery)}`)
+            }
+            transactionSanitizedData.items = transactionItemSanitizedData
+            res.status(201).send(transactionSanitizedData);
+        } catch (err) {
+            console.error("Error addTransaction:", err);
+            res.status(500).send(err.message);
         }
-        const inventoryInfo = {
-            product_id: transactionBody.product.product_id,
-            quantity_available: latestQuantity,
-            reorder_level: 20
-        }
-        await new Inventory().addInventory(inventoryInfo)
-        return transactionsSqlResult
+    }
+
+    getRouter() {
+        return this.router;
     }
 
 }
 
 
-module.exports = { router, Transaction };
+module.exports = Transaction;
