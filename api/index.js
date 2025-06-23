@@ -46,11 +46,11 @@ app.get('/api/hello', async (req, res) => {
 });
 (function initDB() { new PgDB().testConnection() }());
 
-/* app.use(express.static(path.join(__dirname, 'public'))); */
-/* const swaggerUi = require('swagger-ui-express');
+app.use(express.static(path.join(__dirname, 'public')));
+const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const swaggerDocument = YAML.load(path.join(__dirname, '../public/swagger.yaml')); // adjust path as needed
-app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument)); */
+app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Listen on enviroment port or 5000 for local dev
 /* app.listen(port, () => console.log(`Listening on port ${port}`)) */
