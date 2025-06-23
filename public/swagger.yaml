@@ -53,15 +53,25 @@ paths:
       responses:
         '201':
           description: Suppliers added
+    get:
+      summary: Get all suppliers
+      tags: [Suppliers]
+      responses:
+        '200':
+          description: Supplier details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
 
-  /suppliers/{id}:
+  /suppliers/{supplier_id}:
     get:
       summary: Get supplier by ID
       tags: [Suppliers]
       parameters:
-        - name: id
+        - name: supplier_id
           in: path
-          required: false
+          required: true
           schema:
             type: integer
       responses:
