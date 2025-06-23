@@ -48,9 +48,10 @@ app.get('/api/hello', async (req, res) => {
 
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
-const swaggerDocument = YAML.load(path.join(__dirname, '../docs/swagger.yaml')); // adjust path as needed
+const swaggerDocument = YAML.load(path.join(__dirname, '../public/swagger.yaml')); // adjust path as needed
+app.use(express.static('public'));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Listen on enviroment port or 5000 for local dev
-/* app.listen(port, () => console.log(`Listening on port ${port}`)) */
+app.listen(port, () => console.log(`Listening on port ${port}`))
 module.exports = app;
