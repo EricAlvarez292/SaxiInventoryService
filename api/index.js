@@ -43,5 +43,5 @@ app.get('/api/hello', async (req, res) => {
 (function initDB() { new PgDB().testConnection() }());
 
 // Listen on enviroment port or 5000 for local dev
-app.listen(port, () => console.log(`Listening on port ${port}`))
+/* app.listen(port, () => console.log(`Listening on port ${port}`)) */
 module.exports = app;
