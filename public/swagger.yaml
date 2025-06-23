@@ -61,7 +61,7 @@ paths:
       parameters:
         - name: id
           in: path
-          required: true
+          required: false
           schema:
             type: integer
       responses:
@@ -142,12 +142,12 @@ paths:
       parameters:
         - name: user_id
           in: query
-          required: true
+          required: false
           schema:
             type: integer
         - name: product_id
           in: query
-          required: true
+          required: false
           schema:
             type: integer
       responses:
