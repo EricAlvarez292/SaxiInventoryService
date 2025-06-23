@@ -10,12 +10,5 @@
       "src": "/api/(.*)",
       "dest": "/api/index.js"
     }
-  ],
-  "redirects": [
-    {
-      "source": "/api/v1/docs",
-      "destination": "/docs/",
-      "permanent": true
-    }
   ]
 }
