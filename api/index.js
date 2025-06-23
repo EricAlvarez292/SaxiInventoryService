@@ -1,5 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
+const path = require('path');
+const cors = require('cors')
 
 const app = express()
 const port = process.env.PORT || 5000;
@@ -28,6 +30,8 @@ app.use(bodyParser.urlencoded({ extended: false }))
 
 // parse application/json
 app.use(bodyParser.json())
+app.use(cors())
+
 
 /*Routes*/
 app.use('/api/v1/users', new User().getRouter());
@@ -41,6 +45,11 @@ app.get('/api/hello', async (req, res) => {
     res.json({ message: 'Hello from your Express API! 🎉' });
 });
 (function initDB() { new PgDB().testConnection() }());
+
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const swaggerDocument = YAML.load(path.join(__dirname, '../docs/swagger.yaml')); // adjust path as needed
+app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Listen on enviroment port or 5000 for local dev
 /* app.listen(port, () => console.log(`Listening on port ${port}`)) */

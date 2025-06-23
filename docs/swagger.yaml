@@ -1,0 +1,237 @@
+openapi: 3.0.3
+info:
+  title: Saxi Inventory API
+  version: 1.0.0
+  description: API documentation for managing inventory, including users, suppliers, products, transactions, and stock data.
+
+servers:
+  - url: https://saxi-inventory-service.vercel.app/api/v1
+
+paths:
+  /users:
+    post:
+      summary: Add multiple users
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: Users added
+        '400':
+          description: Invalid request
+    get:
+      summary: Get all users
+      tags: [Users]
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /suppliers:
+    post:
+      summary: Add multiple suppliers
+      tags: [Suppliers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Supplier'
+      responses:
+        '201':
+          description: Suppliers added
+
+  /suppliers/{id}:
+    get:
+      summary: Get supplier by ID
+      tags: [Suppliers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Supplier details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+
+  /products:
+    get:
+      summary: Get products (optionally filter by supplier and product ID)
+      tags: [Products]
+      parameters:
+        - name: supplier_id
+          in: query
+          schema:
+            type: integer
+        - name: product_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+    post:
+      summary: Add multiple products
+      tags: [Products]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Product'
+      responses:
+        '201':
+          description: Products created
+
+  /transactions:
+    post:
+      summary: Add a transaction (purchase or sale)
+      tags: [Transactions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+      responses:
+        '201':
+          description: Transaction created
+    get:
+      summary: Get all transactions
+      tags: [Transactions]
+      responses:
+        '200':
+          description: Transaction list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+
+  /inventory:
+    get:
+      summary: Get inventory by user and product ID
+      tags: [Inventory]
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: product_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Inventory info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available_quantity:
+                    type: integer
+
+components:
+  schemas:
+    User:
+      type: object
+      required: [name, role, contact_info]
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+        contact_info:
+          type: string
+
+    Supplier:
+      type: object
+      required: [name, contact_info, address]
+      properties:
+        name:
+          type: string
+        contact_info:
+          type: string
+        address:
+          type: string
+
+    Product:
+      type: object
+      required: [name, description, category, price, supplier_id]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+          format: float
+        supplier_id:
+          type: integer
+
+    TransactionItem:
+      type: object
+      required: [product_id, quantity, price]
+      properties:
+        product_id:
+          type: integer
+        quantity:
+          type: integer
+        price:
+          type: number
+          format: float
+
+    Transaction:
+      type: object
+      required: [user_id, transaction_type, total_amount, payment_method, status, items]
+      properties:
+        user_id:
+          type: integer
+        transaction_type:
+          type: string
+          enum: [PURCHASE, SALE]
+        transaction_date:
+          type: string
+          format: date-time
+        total_amount:
+          type: number
+        payment_method:
+          type: string
+        status:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionItem'
