@@ -3,6 +3,9 @@ info:
   title: Saxi Inventory API
   version: 1.0.0
   description: API documentation for managing inventory, including users, suppliers, products, transactions, and stock data.
+  contact:
+    name: Eric Alvarez
+    email: eric.alvarez292@gmail.com
 
 servers:
   - url: https://saxi-inventory-service.vercel.app/api/v1
@@ -84,7 +87,7 @@ paths:
 
   /products:
     get:
-      summary: Get products (optionally filter by supplier and product ID)
+      summary: Get products with optional filtering by supplier, product ID, and category, and optional sorting by field and order
       tags: [Products]
       parameters:
         - name: supplier_id
@@ -95,6 +98,18 @@ paths:
           in: query
           schema:
             type: integer
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+        - name: sortOrder
+          in: query
+          schema:
+            type: string            
       responses:
         '200':
           description: List of products

@@ -17,21 +17,29 @@ class Product {
 
     async getProducts(req, res) {
         try {
-            const { product_id, supplier_id } = req.query;
+            const { product_id, supplier_id, category, sortBy, sortOrder } = req.query;
+
             console.log(`getProducts() : ${JSON.stringify(req.query)}`)
-            const conditions = [];
-            const values = [];
+            const whereConditions = [];
+            let sortCondition = ""
             if (product_id) {
-                conditions.push(`product_id = ${product_id}`);
-                values.push(product_id);
+                whereConditions.push(`product_id = ${product_id}`);
             }
             if (supplier_id) {
-                conditions.push(`supplier_id = ${supplier_id}`);
-                values.push(supplier_id);
+                whereConditions.push(`supplier_id = ${supplier_id}`);
             }
-            const whereClause = conditions.length ? "WHERE " + conditions.join(" AND ") : "";
+            if (category) {
+                whereConditions.push(`category = '${category}'`);
+            }
+            if (sortBy) {
+                let defaultSort = "asc";
+                if (sortOrder) defaultSort = sortOrder
+                sortCondition = `Order by ${sortBy} ${defaultSort}`
+            }
+            const whereClause = whereConditions.length ? "WHERE " + whereConditions.join(" AND ") : "";
             console.log(`getProducts() where clause : ${whereClause}`)
-            const result = await this.pgdb.getDbInstance().any(`SELECT * FROM products ${whereClause}`);
+            console.log(`getProducts() sort : ${sortCondition}`)
+            const result = await this.pgdb.getDbInstance().any(`SELECT * FROM products ${whereClause} ${sortCondition}`);
             console.log(`getProducts() : ${JSON.stringify(result)}`)
             res.json(result);
         } catch (err) {
