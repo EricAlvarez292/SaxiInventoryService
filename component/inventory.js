@@ -56,13 +56,6 @@ class Inventory {
 
     async getInventoryCategories(req, res) {
         try {
-            const { product_id } = req.query;
-            const whereConditions = [];
-            if (product_id) {
-                whereConditions.push(`product_id = ${product_id}`);
-            }
-            const whereClause = whereConditions.length ? "WHERE " + whereConditions.join(" AND ") : "";
-            console.log(`getInventoryCategories() where clause : ${whereClause}`)
             const result = await this.pgdb.getDbInstance().any(`
                             SELECT DISTINCT p.category
                             FROM inventory i
@@ -70,8 +63,7 @@ class Inventory {
                             WHERE i.product_id IN (
                             SELECT ti.product_id
                             FROM transactions t
-                            JOIN transaction_items ti ON t.transaction_id = ti.transaction_id
-                            ${whereClause})`);
+                            JOIN transaction_items ti ON t.transaction_id = ti.transaction_id)`);
             console.log(`getInventory() : ${JSON.stringify(result)}`)
             const resultList = result.map(item => item.category)
             console.log(`getInventoryCategories() : ${JSON.stringify(resultList)}`)

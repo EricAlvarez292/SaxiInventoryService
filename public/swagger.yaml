@@ -136,10 +136,10 @@ paths:
           
   /products/categories:
     get:
-      summary: Get distinct product categories (optionally filter by product ID)
+      summary: Get distinct product categories (optionally filter by supplier ID)
       tags: [Products]
       parameters:
-        - name: product_id
+        - name: supplier_id
           in: query
           required: false
           schema:
@@ -209,14 +209,8 @@ paths:
                     
   /inventory/categories:
     get:
-      summary: Get distinct inventory categories (optionally filter by product ID)
+      summary: Get distinct inventory categories
       tags: [Inventory]
-      parameters:
-        - name: product_id
-          in: query
-          required: false
-          schema:
-            type: integer
       responses:
         '200':
           description: List of distinct inventory categories

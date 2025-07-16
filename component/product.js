@@ -68,10 +68,10 @@ class Product {
 
     async getProductCategories(req, res) {
         try {
-            const { product_id } = req.query;
+            const { supplier_id } = req.query;
             const whereConditions = [];
-            if (product_id) {
-                whereConditions.push(`product_id = ${product_id}`);
+            if (supplier_id) {
+                whereConditions.push(`supplier_id = ${supplier_id}`);
             }
             const whereClause = whereConditions.length ? "WHERE " + whereConditions.join(" AND ") : "";
             console.log(`getProductsCategory() where clause : ${whereClause}`)
