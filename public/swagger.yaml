@@ -133,6 +133,27 @@ paths:
       responses:
         '201':
           description: Products created
+          
+  /products/categories:
+    get:
+      summary: Get distinct product categories (optionally filter by product ID)
+      tags: [Products]
+      parameters:
+        - name: product_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of distinct product categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string  
+          
 
   /transactions:
     post:
@@ -185,6 +206,26 @@ paths:
                 properties:
                   available_quantity:
                     type: integer
+                    
+  /inventory/categories:
+    get:
+      summary: Get distinct inventory categories (optionally filter by product ID)
+      tags: [Inventory]
+      parameters:
+        - name: product_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of distinct inventory categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
 
 components:
   schemas:

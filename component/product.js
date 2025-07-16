@@ -13,6 +13,7 @@ class Product {
     initializeRoutes() {
         this.router.get("/", this.getProducts.bind(this));
         this.router.post("/", this.addProducts.bind(this));
+        this.router.get("/categories", this.getProductCategories.bind(this));
     }
 
     async getProducts(req, res) {
@@ -60,6 +61,26 @@ class Product {
             res.status(201).send(sanitizedData);
         } catch (err) {
             console.error("Error addProducts():", err);
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+
+    async getProductCategories(req, res) {
+        try {
+            const { product_id } = req.query;
+            const whereConditions = [];
+            if (product_id) {
+                whereConditions.push(`product_id = ${product_id}`);
+            }
+            const whereClause = whereConditions.length ? "WHERE " + whereConditions.join(" AND ") : "";
+            console.log(`getProductsCategory() where clause : ${whereClause}`)
+            const result = await this.pgdb.getDbInstance().any(`SELECT DISTINCT category FROM products ${whereClause} ORDER BY category`);
+            const resultList = result.map(item => item.category)
+            console.log(`getProductsCategory() : ${JSON.stringify(resultList)}`)
+            res.json(resultList);
+        } catch (err) {
+            console.error("Error getProductsCategory():", err);
             res.status(500).json({ error: err.message });
         }
     }

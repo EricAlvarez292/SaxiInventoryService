@@ -11,6 +11,7 @@ class Inventory {
 
     initializeRoutes() {
         this.router.get("/", this.getInventory.bind(this));
+        this.router.get("/categories", this.getInventoryCategories.bind(this));
     }
 
     async getInventory(req, res) {
@@ -50,6 +51,34 @@ class Inventory {
         } catch (err) {
             console.error("Error getInventory():", err);
             res.status(500).send(err.message);
+        }
+    }
+
+    async getInventoryCategories(req, res) {
+        try {
+            const { product_id } = req.query;
+            const whereConditions = [];
+            if (product_id) {
+                whereConditions.push(`product_id = ${product_id}`);
+            }
+            const whereClause = whereConditions.length ? "WHERE " + whereConditions.join(" AND ") : "";
+            console.log(`getInventoryCategories() where clause : ${whereClause}`)
+            const result = await this.pgdb.getDbInstance().any(`
+                            SELECT DISTINCT p.category
+                            FROM inventory i
+                            JOIN products p ON i.product_id = p.product_id
+                            WHERE i.product_id IN (
+                            SELECT ti.product_id
+                            FROM transactions t
+                            JOIN transaction_items ti ON t.transaction_id = ti.transaction_id
+                            ${whereClause})`);
+            console.log(`getInventory() : ${JSON.stringify(result)}`)
+            const resultList = result.map(item => item.category)
+            console.log(`getInventoryCategories() : ${JSON.stringify(resultList)}`)
+            res.json(resultList);
+        } catch (err) {
+            console.error("Error getInventoryCategories():", err);
+            res.status(500).json({ error: err.message });
         }
     }
 
