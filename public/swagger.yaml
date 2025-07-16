@@ -9,6 +9,9 @@ info:
 
 servers:
   - url: https://saxi-inventory-service.vercel.app/api/v1
+  
+security:
+  - bearerAuth: []
 
 paths:
   /users:
@@ -220,8 +223,14 @@ paths:
                 type: array
                 items:
                   type: string
-
+                  
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     User:
       type: object
