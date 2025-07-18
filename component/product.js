@@ -14,6 +14,7 @@ class Product {
         this.router.get("/", this.getProducts.bind(this));
         this.router.post("/", this.addProducts.bind(this));
         this.router.put("/:product_id", this.updateProducts.bind(this));
+        this.router.delete("/:product_id", this.deleteProduct.bind(this));
         this.router.get("/categories", this.getProductCategories.bind(this));
     }
 
@@ -23,6 +24,7 @@ class Product {
 
             console.log(`getProducts() : ${JSON.stringify(req.query)}`)
             const whereConditions = [];
+            whereConditions.push('isDeleted IS NOT TRUE')
             let sortCondition = `Order by name asc`
             if (product_id) {
                 whereConditions.push(`product_id = ${product_id}`);
@@ -104,6 +106,26 @@ class Product {
             res.status(201).send(sanitizedData);
         } catch (err) {
             console.error("Error updateProducts():", err);
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    async deleteProduct(req, res) {
+        try {
+            const { product_id } = req.params;
+            console.log(`deleteProduct() : ${JSON.stringify(req.params)}`)
+            if (!product_id) {
+                res.status(400).json({ error: "Missig product_id" });
+                return
+            }
+            const columns = this.pgdb.getColumns(models.delete_product);
+            const sanitizedData = this.pgdb.sanitizeData({ isdeleted: true }, models.delete_product)
+            const updateQuery = this.pgdb.getDbHelpers().helpers.update(sanitizedData, columns, 'products') + ` WHERE product_id='${product_id}'`;
+            await this.pgdb.getDbInstance().any(updateQuery);
+            console.log(`deleteProduct() Response Data : ${JSON.stringify(sanitizedData)}`)
+            res.status(201).send(sanitizedData);
+        } catch (err) {
+            console.error("Error deleteProduct():", err);
             res.status(500).json({ error: err.message });
         }
     }

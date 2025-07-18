@@ -179,6 +179,30 @@ paths:
           description: Invalid request
         '404':
           description: Product not found
+    delete:
+      summary: Soft delete a product by ID
+      tags: [Products]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product marked as deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isDeleted:
+                    type: boolean
+                    example: true
+        '400':
+          description: Invalid product ID
+        '404':
+          description: Product not found
 
           
   /products/categories:

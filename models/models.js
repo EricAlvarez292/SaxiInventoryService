@@ -34,6 +34,8 @@ const Models = {
         description: null,
         category: null,
         price: null
+    }, delete_product: {
+        isdeleted: null
     }
 }
 module.exports = Models
