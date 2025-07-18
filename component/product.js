@@ -13,6 +13,7 @@ class Product {
     initializeRoutes() {
         this.router.get("/", this.getProducts.bind(this));
         this.router.post("/", this.addProducts.bind(this));
+        this.router.put("/:product_id", this.updateProducts.bind(this));
         this.router.get("/categories", this.getProductCategories.bind(this));
     }
 
@@ -22,7 +23,7 @@ class Product {
 
             console.log(`getProducts() : ${JSON.stringify(req.query)}`)
             const whereConditions = [];
-            let sortCondition = ""
+            let sortCondition = `Order by name asc`
             if (product_id) {
                 whereConditions.push(`product_id = ${product_id}`);
             }
@@ -81,6 +82,28 @@ class Product {
             res.json(resultList);
         } catch (err) {
             console.error("Error getProductsCategory():", err);
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    async updateProducts(req, res) {
+        try {
+            const productsInfo = req.body;
+            const { product_id } = req.params;
+            console.log(`updateProducts() : ${JSON.stringify(req.params)}`)
+            console.log(`updateProducts() Request Data : ${JSON.stringify(productsInfo)}`)
+            if (!product_id) {
+                res.status(417).json({ error: "Missig product_id" });
+                return
+            }
+            const columns = this.pgdb.getColumns(models.update_product);
+            const sanitizedData = this.pgdb.sanitizeData(productsInfo, models.update_product)
+            const updateQuery = this.pgdb.getDbHelpers().helpers.update(sanitizedData, columns, 'products') + `WHERE product_id='${product_id}'`;
+            await this.pgdb.getDbInstance().any(updateQuery);
+            console.log(`updateProducts() Response Data : ${JSON.stringify(sanitizedData)}`)
+            res.status(201).send(sanitizedData);
+        } catch (err) {
+            console.error("Error updateProducts():", err);
             res.status(500).json({ error: err.message });
         }
     }

@@ -29,6 +29,11 @@ const Models = {
     }, inventory: {
         product_id: null,
         quantity_in_stock: null
+    }, update_product: {
+        name: null,
+        description: null,
+        category: null,
+        price: null
     }
 }
 module.exports = Models
