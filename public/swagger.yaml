@@ -136,6 +136,50 @@ paths:
       responses:
         '201':
           description: Products created
+
+  /products/{product_id}:
+    put:
+      summary: Update a product by ID
+      tags: [Products]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - category
+                - price
+              properties:
+                name:
+                  type: string
+                  example: ALaptop Update
+                description:
+                  type: string
+                  example: Dell Laptop
+                category:
+                  type: string
+                  example: Electronics
+                price:
+                  type: number
+                  format: float
+                  example: 300.00
+      responses:
+        '200':
+          description: Product updated successfully
+        '400':
+          description: Invalid request
+        '404':
+          description: Product not found
+
           
   /products/categories:
     get:

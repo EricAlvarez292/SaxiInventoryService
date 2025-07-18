@@ -93,7 +93,7 @@ class Product {
             console.log(`updateProducts() : ${JSON.stringify(req.params)}`)
             console.log(`updateProducts() Request Data : ${JSON.stringify(productsInfo)}`)
             if (!product_id) {
-                res.status(417).json({ error: "Missig product_id" });
+                res.status(400).json({ error: "Missig product_id" });
                 return
             }
             const columns = this.pgdb.getColumns(models.update_product);
