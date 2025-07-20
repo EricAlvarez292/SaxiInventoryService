@@ -19,19 +19,9 @@ const Product = require('../component/product');
 const Inventory = require('../component/inventory');
 const Transaction = require('../component/transaction');
 
-// Parsing middleware
-// Parse application/x-www-form-urlencoded
-// app.use(bodyParser.urlencoded({ extended: false })); // Remove 
 app.use(express.urlencoded({ extended: true })); // New
-// Parse application/json
-// app.use(bodyParser.json()); // Remove
-app.use(express.json()); // New
-
-// MySQL Code goes here
-// parse application/x-www-form-urlencoded
+app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }))
-
-// parse application/json
 app.use(bodyParser.json())
 app.use(cors())
 
