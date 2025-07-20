@@ -21,7 +21,7 @@ class Transaction {
             console.log(`getTransactions() : ${JSON.stringify(result)}`)
             res.json(result);
         } catch (err) {
-            res.status(500).send(err.message);
+            res.status(500).json({ message: err.message });
         }
     }
 
@@ -88,7 +88,7 @@ class Transaction {
             res.status(201).send(transactionSanitizedData);
         } catch (err) {
             console.error("Error addTransaction:", err);
-            res.status(500).send(err.message);
+            res.status(500).json({ message: err.message });
         }
     }
 

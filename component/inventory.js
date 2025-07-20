@@ -50,7 +50,7 @@ class Inventory {
             res.json(result);
         } catch (err) {
             console.error("Error getInventory():", err);
-            res.status(500).send(err.message);
+            res.status(500).json({ message: err.message });
         }
     }
 
@@ -70,7 +70,7 @@ class Inventory {
             res.json(resultList);
         } catch (err) {
             console.error("Error getInventoryCategories():", err);
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     }
 

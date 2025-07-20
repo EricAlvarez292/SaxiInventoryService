@@ -20,7 +20,7 @@ class User {
             console.log(`getUsers() : ${JSON.stringify(result)}`)
             res.json(result);
         } catch (err) {
-            res.status(500).send(err.message);
+            res.status(500).json({ message: err.message });
         }
     }
 
@@ -36,7 +36,7 @@ class User {
             res.status(201).send(sanitizedData);
         } catch (err) {
             console.error("Error addUsers:", err);
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     }
 

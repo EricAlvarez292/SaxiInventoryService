@@ -48,7 +48,7 @@ class Product {
             res.json(result);
         } catch (err) {
             console.error("Error getProducts():", err);
-            res.status(500).send(err.message);
+            res.status(500).json({ message: err.message });
         }
     }
 
@@ -64,7 +64,7 @@ class Product {
             res.status(201).send(sanitizedData);
         } catch (err) {
             console.error("Error addProducts():", err);
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     }
 
@@ -84,7 +84,7 @@ class Product {
             res.json(resultList);
         } catch (err) {
             console.error("Error getProductsCategory():", err);
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     }
 
@@ -95,7 +95,7 @@ class Product {
             console.log(`updateProducts() : ${JSON.stringify(req.params)}`)
             console.log(`updateProducts() Request Data : ${JSON.stringify(productsInfo)}`)
             if (!product_id) {
-                res.status(400).json({ error: "Missig product_id" });
+                res.status(400).json({ message: "Missig product_id" });
                 return
             }
             const columns = this.pgdb.getColumns(models.update_product);
@@ -106,7 +106,7 @@ class Product {
             res.status(201).send(sanitizedData);
         } catch (err) {
             console.error("Error updateProducts():", err);
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     }
 
@@ -115,7 +115,7 @@ class Product {
             const { product_id } = req.params;
             console.log(`deleteProduct() : ${JSON.stringify(req.params)}`)
             if (!product_id) {
-                res.status(400).json({ error: "Missig product_id" });
+                res.status(400).json({ message: "Missig product_id" });
                 return
             }
             const columns = this.pgdb.getColumns(models.delete_product);
@@ -126,7 +126,7 @@ class Product {
             res.status(201).send(sanitizedData);
         } catch (err) {
             console.error("Error deleteProduct():", err);
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     }
 

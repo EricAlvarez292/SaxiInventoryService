@@ -32,7 +32,7 @@ class Supplier {
             console.log(`getSuppliers() : ${JSON.stringify(result)}`)
             res.json(result);
         } catch (err) {
-            res.status(500).send(err.message);
+            res.status(500).json({ message: err.message });
         }
     }
 
@@ -48,7 +48,7 @@ class Supplier {
             res.status(201).send(sanitizedData);
         } catch (err) {
             console.error("Error addSuppliers():", err);
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ message: err.message });
         }
     }
 
